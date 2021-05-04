@@ -24,7 +24,7 @@ def run_model(clf,x_train,y_train,x_test,y_test,condition):
       return
 
   for i in range(pred.shape[0]):
-    if prob[i][pred[i]]>0.95:
+    if prob[i][np.where(clf.classes_==pred[i])]>0.95:
       pred_list.append(pred[i])
       true_list.append(y_test_list[i])
       prob_list.append(prob[i])
