@@ -5,7 +5,7 @@ from sklearn.metrics import f1_score
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import log_loss,accuracy_score
-
+# from StringIO import StringIO
 
 pred_list=[]
 true_list=[]
@@ -108,7 +108,6 @@ def dataset2():
         run_model(clf,c_X_train,c_y_train,c_X_test,c_y_test,i==15)
     print(log_loss(true_list,prob_list,labels=labels))
     print(accuracy_score(true_list,pred_list))
-
 
 #waveform
 def dataset3():
@@ -242,10 +241,49 @@ def dataset5():
     print(log_loss(true_list, prob_list, labels=list(dic.values())))
     print(accuracy_score(true_list, pred_list))
 
+#avila
+def dataset6():
+    data_train = np.genfromtxt("avila/avila-tr.txt", dtype='unicode', delimiter=",")
+    # data_test = np.genfromtxt("avila/avila-ts.txt", dtype='unicode', delimiter=",")
+    # dataUnion = np.concatenate((data_train, data_test), axis=0)
+    df = pd.DataFrame(data_train)
+
+    labels = df[df.columns[-1]].unique()
+    dic = {}
+    for i in range(len(labels)):
+        dic.update({labels[i]: i})
+    df = df.replace(dic)
+    # print(labels)
+    # print(df[df.columns[-1]].value_counts())
+    Y = df[df.columns[-1]]
+    X = df.iloc[: , :-1]
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
+    c_X_train,c_X_test,c_y_train,c_y_test=X_train.copy(),X_test.copy(),y_train.copy(),y_test.copy()
+    for i in range(1,16):
+        if X_test.shape[0]==0:
+            break
+        clf = DecisionTreeClassifier(max_depth=i)
+        run_model(clf,X_train, y_train, X_test, y_test,i==15)
+    print(log_loss(true_list,prob_list,labels=labels))
+    print(accuracy_score(true_list,pred_list))
+
+    pred_list.clear()
+    true_list.clear()
+    prob_list.clear()
+    for i in range(1,16):
+        if c_X_test.shape[0]==0:
+            break
+        clf = KNeighborsClassifier(n_neighbors=i)
+        run_model(clf,c_X_train,c_y_train,c_X_test,c_y_test,i==15)
+    print(log_loss(true_list,prob_list,labels=labels))
+    print(accuracy_score(true_list,pred_list))
+
 if __name__ == '__main__':
     # dataset1()
     # dataset2()
     # dataset3()
     # dataset4()
-    dataset5()
+    # dataset5()
+    dataset6()
+
 
