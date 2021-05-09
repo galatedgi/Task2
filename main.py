@@ -188,36 +188,20 @@ def dataset5():
     data5 = pd.read_csv("Football/season-0910_csv.csv", header=0)
 
     dataUnion = pd.concat([data1, data2, data3, data4, data5], ignore_index=True)
-    # dataUnion.isnull().any()
-    # print(dataUnion.isnull().sum())
     dataUnion = dataUnion.fillna(0)
-    # print(dataUnion)
-    print(dataUnion.HomeTeam.unique())
-    # labels = np.unique(dataUnion[['HomeTeam', 'AwayTeam', 'Referee']].values)
+    # print(dataUnion.HomeTeam.unique())
     labels = np.unique(dataUnion['HomeTeam'].values)
-    # labels = dataUnion.HomeTeam.unique()
     dic = {}
     for i in range(len(labels)):
         dic.update({labels[i]: i})
     df = dataUnion.replace(dic)
 
-    # away_team_labels = dataUnion.AwayTeam.unique()
-    # away_team_dic = {}
-    # for i in range(len(away_team_labels)):
-    #     away_team_dic.update({away_team_labels[i]: i})
-    # df = dataUnion.replace(away_team_dic)
-    # print(df.dtypes)
-
-    # df['Referee'] = df['Referee'].astype(int)
     ref_lables = df.Referee.unique()
     ref_dic = {}
     for i in range(len(ref_lables)):
         ref_dic.update({ref_lables[i]: i})
     df = df.replace(ref_dic)
 
-    # print(df.HomeTeam.unique())
-    # print(df['HomeTeam'].value_counts())
-    # df = df.drop(['Date', 'Div'], axis='columns', inplace=False)
     Y = df['HomeTeam']
     X = df.drop(['HomeTeam', 'Date', 'Div', 'HTR', 'FTR'], axis='columns', inplace=False)
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
@@ -278,12 +262,52 @@ def dataset6():
     print(log_loss(true_list,prob_list,labels=labels))
     print(accuracy_score(true_list,pred_list))
 
+#segmentation
+def dataset7():
+    data = np.genfromtxt("segmentation/segmentation.test", dtype='unicode', delimiter=",")
+    # data = pd.read_csv('segmentation/segmentation.test', sep=',', header=0)
+
+    df = pd.DataFrame(data)
+
+    labels = df[df.columns[0]].unique()
+    dic = {}
+    for i in range(len(labels)):
+        dic.update({labels[i]: i})
+    df = df.replace(dic)
+
+    Y = df[df.columns[0]]
+    # X = df.iloc[: , 1:]
+    print(df.columns)
+    X = df.drop(df.columns[0], axis=1, inplace=False)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
+    c_X_train,c_X_test,c_y_train,c_y_test=X_train.copy(),X_test.copy(),y_train.copy(),y_test.copy()
+    for i in range(1,16):
+        if X_test.shape[0]==0:
+            break
+        clf = DecisionTreeClassifier(max_depth=i)
+        run_model(clf,X_train, y_train, X_test, y_test,i==15)
+    print(log_loss(true_list,prob_list,labels=labels))
+    print(accuracy_score(true_list,pred_list))
+
+    pred_list.clear()
+    true_list.clear()
+    prob_list.clear()
+    for i in range(1,16):
+        if c_X_test.shape[0]==0:
+            break
+        clf = KNeighborsClassifier(n_neighbors=i)
+        run_model(clf,c_X_train,c_y_train,c_X_test,c_y_test,i==15)
+    print(log_loss(true_list,prob_list,labels=labels))
+    print(accuracy_score(true_list,pred_list))
+
 if __name__ == '__main__':
     # dataset1()
     # dataset2()
     # dataset3()
     # dataset4()
     # dataset5()
-    dataset6()
+    # dataset6()
+
+    dataset7()
 
 
