@@ -6,6 +6,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import log_loss,accuracy_score
 # from StringIO import StringIO
+import xlwt
+import xlrd
 
 pred_list=[]
 true_list=[]
@@ -190,20 +192,26 @@ def dataset5():
     dataUnion = pd.concat([data1, data2, data3, data4, data5], ignore_index=True)
     dataUnion = dataUnion.fillna(0)
     # print(dataUnion.HomeTeam.unique())
+    for col_name in dataUnion.columns:
+        if dataUnion[col_name].dtype == 'object':
+            dataUnion[col_name] = dataUnion[col_name].astype('category')
+            dataUnion[col_name] = dataUnion[col_name].cat.codes
+
     labels = np.unique(dataUnion['HomeTeam'].values)
-    dic = {}
-    for i in range(len(labels)):
-        dic.update({labels[i]: i})
-    df = dataUnion.replace(dic)
+    # dic = {}
+    # for i in range(len(labels)):
+    #     dic.update({labels[i]: i})
+    # df = dataUnion.replace(dic)
+    #
+    # ref_lables = df.Referee.unique()
+    # ref_dic = {}
+    # for i in range(len(ref_lables)):
+    #     ref_dic.update({ref_lables[i]: i})
+    # df = df.replace(ref_dic)
 
-    ref_lables = df.Referee.unique()
-    ref_dic = {}
-    for i in range(len(ref_lables)):
-        ref_dic.update({ref_lables[i]: i})
-    df = df.replace(ref_dic)
+    Y = dataUnion['HomeTeam']
+    X = dataUnion.drop(['HomeTeam'], axis='columns', inplace=False)
 
-    Y = df['HomeTeam']
-    X = df.drop(['HomeTeam', 'Date', 'Div', 'HTR', 'FTR'], axis='columns', inplace=False)
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
     c_X_train, c_X_test, c_y_train, c_y_test = X_train.copy(), X_test.copy(), y_train.copy(), y_test.copy()
     for i in range(1, 16):
@@ -211,7 +219,7 @@ def dataset5():
             break
         clf = DecisionTreeClassifier(max_depth=i)
         run_model(clf, X_train, y_train, X_test, y_test, i == 15)
-    print(log_loss(true_list, prob_list, labels=list(dic.values())))
+    print(log_loss(true_list, prob_list, labels=list(labels)))
     print(accuracy_score(true_list, pred_list))
 
     pred_list.clear()
@@ -222,7 +230,7 @@ def dataset5():
             break
         clf = KNeighborsClassifier(n_neighbors=i)
         run_model(clf, c_X_train, c_y_train, c_X_test, c_y_test, i == 15)
-    print(log_loss(true_list, prob_list, labels=list(dic.values())))
+    print(log_loss(true_list, prob_list, labels=list(labels)))
     print(accuracy_score(true_list, pred_list))
 
 #avila
@@ -265,8 +273,6 @@ def dataset6():
 #segmentation
 def dataset7():
     data = np.genfromtxt("segmentation/segmentation.test", dtype='unicode', delimiter=",")
-    # data = pd.read_csv('segmentation/segmentation.test', sep=',', header=0)
-
     df = pd.DataFrame(data)
 
     labels = df[df.columns[0]].unique()
@@ -276,38 +282,91 @@ def dataset7():
     df = df.replace(dic)
 
     Y = df[df.columns[0]]
-    # X = df.iloc[: , 1:]
-    print(df.columns)
     X = df.drop(df.columns[0], axis=1, inplace=False)
+
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
     c_X_train,c_X_test,c_y_train,c_y_test=X_train.copy(),X_test.copy(),y_train.copy(),y_test.copy()
     for i in range(1,16):
         if X_test.shape[0]==0:
             break
         clf = DecisionTreeClassifier(max_depth=i)
-        run_model(clf,X_train, y_train, X_test, y_test,i==15)
-    print(log_loss(true_list,prob_list,labels=labels))
-    print(accuracy_score(true_list,pred_list))
+        run_model(clf, X_train, y_train, X_test, y_test, i == 15)
+    print(log_loss(true_list, prob_list, labels=labels))
+    print(accuracy_score(true_list, pred_list))
 
     pred_list.clear()
     true_list.clear()
     prob_list.clear()
-    for i in range(1,16):
-        if c_X_test.shape[0]==0:
+    for i in range(1, 16):
+        if c_X_test.shape[0] == 0:
             break
         clf = KNeighborsClassifier(n_neighbors=i)
-        run_model(clf,c_X_train,c_y_train,c_X_test,c_y_test,i==15)
-    print(log_loss(true_list,prob_list,labels=labels))
-    print(accuracy_score(true_list,pred_list))
+        run_model(clf, c_X_train, c_y_train, c_X_test, c_y_test, i == 15)
+    print(log_loss(true_list, prob_list, labels=labels))
+    print(accuracy_score(true_list, pred_list))
+
+def dataset():
+
+    book = xlwt.Workbook()
+    ws = book.add_sheet('segmentation')  # Add a sheet
+    f = open('segmentation/new1.txt', 'r+')
+
+    data = f.readlines()  # read all lines at once
+    for i in range(len(data)):
+        row = data[
+            i].split(",")  # This will return a line of string data, you may need to convert to other formats depending on your use case
+
+        for j in range(len(row)):
+            ws.write(i, j, row[j])  # Write to cell i, j
+
+    book.save('segmentation/segmentation' + '.xls')
+    f.close()
+
+#healthcare
+def dataset8():
+    data = pd.read_csv("healthcare/healthcare-dataset-stroke-data.csv", header=0)
+    df = pd.DataFrame(data)
+    df.dropna(inplace= True)
+    for col_name in df.columns:
+        if df[col_name].dtype == 'object':
+            df[col_name] = df[col_name].astype('category')
+            df[col_name] = df[col_name].cat.codes
+
+    labels = df['work_type'].unique()
+
+    Y = df['work_type']
+    X = df.drop('work_type', axis='columns', inplace=False)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
+    c_X_train, c_X_test, c_y_train, c_y_test = X_train.copy(), X_test.copy(), y_train.copy(), y_test.copy()
+    for i in range(1, 16):
+        if X_test.shape[0] == 0:
+            break
+        clf = DecisionTreeClassifier(max_depth=i)
+        run_model(clf, X_train, y_train, X_test, y_test, i == 15)
+    print(log_loss(true_list, prob_list, labels=list(labels)))
+    print(accuracy_score(true_list, pred_list))
+
+    pred_list.clear()
+    true_list.clear()
+    prob_list.clear()
+    for i in range(1, 16):
+        if c_X_test.shape[0] == 0:
+            break
+        clf = KNeighborsClassifier(n_neighbors=i)
+        run_model(clf, c_X_train, c_y_train, c_X_test, c_y_test, i == 15)
+    print(log_loss(true_list, prob_list, labels=list(labels)))
+    print(accuracy_score(true_list, pred_list))
+
+#bank
 
 if __name__ == '__main__':
     # dataset1()
     # dataset2()
     # dataset3()
     # dataset4()
-    # dataset5()
+    dataset5()
     # dataset6()
-
-    dataset7()
-
+    # dataset7()
+    # dataset()
+    # dataset8()
 
